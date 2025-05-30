@@ -1,72 +1,53 @@
 from flask import Flask, request, jsonify, render_template
 import requests
-import os
 
 app = Flask(__name__)
 
-IMGBB_API_KEY = os.environ.get("IMGBB_API_KEY")  # 从环境变量读取你的 imgbb Key
-
-# ----------- 平台抓图逻辑 -----------
-def search_pinterest_images(query):
+def fetch_pinterest_images(query):
+    # 示例：真实抓图逻辑可接入 Pinterest API 或第三方抓图工具
     return [
-        f"https://i.pinimg.com/564x/fake1.jpg",
-        f"https://i.pinimg.com/564x/fake2.jpg",
-        f"https://i.pinimg.com/564x/fake3.jpg"
+        {"source": "pinterest", "url": f"https://i.pinimg.com/236x/dummy1.jpg"},
+        {"source": "pinterest", "url": f"https://i.pinimg.com/236x/dummy2.jpg"},
     ]
 
-def search_bing_images(query):
+def fetch_google_images(query):
     return [
-        f"https://www.bing.com/fake1.jpg",
-        f"https://www.bing.com/fake2.jpg",
-        f"https://www.bing.com/fake3.jpg"
+        {"source": "google", "url": f"https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png"},
+        {"source": "google", "url": f"https://www.google.com/images/branding/product/ico/googleg_lodp.ico"},
     ]
 
-def search_google_images(query):
+def fetch_bing_images(query):
     return [
-        f"https://www.google.com/fake1.jpg",
-        f"https://www.google.com/fake2.jpg",
-        f"https://www.google.com/fake3.jpg"
+        {"source": "bing", "url": f"https://www.bing.com/th?id=OHR.dummy1"},
+        {"source": "bing", "url": f"https://www.bing.com/th?id=OHR.dummy2"},
     ]
 
-# ----------- 图床上传 -----------
-def upload_to_imgbb(image_url):
-    if not IMGBB_API_KEY:
-        return image_url
-    try:
-        res = requests.post("https://api.imgbb.com/1/upload", params={
-            "key": IMGBB_API_KEY,
-            "image": image_url
-        })
-        data = res.json()
-        return data["data"]["url"]
-    except:
-        return image_url
-
-# ----------- 网页界面 -----------
 @app.route("/")
-def index():
+def home():
     return render_template("index.html")
 
-# ----------- 搜图 API -----------
 @app.route("/search")
 def search():
     query = request.args.get("q")
     platform = request.args.get("platform")
 
     if not query or not platform:
-        return jsonify({"error": "Missing query or platform"})
+        return jsonify({"error": "Missing query or platform"}), 400
 
     if platform == "pinterest":
-        urls = search_pinterest_images(query)
-    elif platform == "bing":
-        urls = search_bing_images(query)
+        data = fetch_pinterest_images(query)
     elif platform == "google":
-        urls = search_google_images(query)
+        data = fetch_google_images(query)
+    elif platform == "bing":
+        data = fetch_bing_images(query)
     else:
-        return jsonify({"error": "Unsupported platform"})
+        return jsonify({"error": "Unsupported platform"}), 400
 
-    final_results = [{"url": upload_to_imgbb(url), "source": platform} for url in urls]
-    return jsonify(final_results)
+    return jsonify({
+        "platform": platform,
+        "query": query,
+        "results": data
+    })
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=10000)
