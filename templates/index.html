@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>趋势图抓取工具</title>
+    <title>多平台趋势图抓取工具</title>
     <style>
         body { font-family: sans-serif; padding: 20px; }
         img { width: 200px; height: 200px; margin: 10px; object-fit: cover; }
@@ -12,17 +12,16 @@
     <h2>📸 多平台趋势图抓取</h2>
     <form onsubmit="search(); return false;">
         <label>关键词：</label>
-        <input type="text" id="query" required>
+        <input type="text" id="query" required />
         <label>平台：</label>
         <select id="platform">
             <option value="pinterest">Pinterest</option>
-            <option value="bing">Bing</option>
             <option value="google">Google</option>
+            <option value="bing">Bing</option>
         </select>
         <button type="submit">开始搜索</button>
     </form>
     <div id="results" style="margin-top:20px;"></div>
-
     <script>
         async function search() {
             const query = document.getElementById("query").value;
@@ -31,8 +30,8 @@
             const data = await res.json();
             const resultsDiv = document.getElementById("results");
             resultsDiv.innerHTML = "";
-            if (Array.isArray(data)) {
-                data.forEach(item => {
+            if (Array.isArray(data.results)) {
+                data.results.forEach(item => {
                     const img = document.createElement("img");
                     img.src = item.url;
                     resultsDiv.appendChild(img);
