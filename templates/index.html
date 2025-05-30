@@ -1,60 +1,46 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>多平台趋势图抓取工具</title>
+    <meta charset="UTF-8">
+    <title>趋势图抓取工具</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        img { width: 200px; height: 200px; margin: 10px; object-fit: cover; }
+    </style>
 </head>
 <body>
-  <h2>多平台趋势图抓取工具</h2>
-  <form id="searchForm">
-    <label>关键词：<input type="text" name="q" required /></label>
-    <label>
-      来源平台：
-      <select name="platform">
-        <option value="test">测试平台</option>
-        <option value="pinterest">Pinterest</option>
-        <option value="bing">Bing</option>
-        <!-- 可继续添加其他平台 -->
-      </select>
-    </label>
-    <button type="submit">开始搜索</button>
-  </form>
+    <h2>📸 多平台趋势图抓取</h2>
+    <form onsubmit="search(); return false;">
+        <label>关键词：</label>
+        <input type="text" id="query" required>
+        <label>平台：</label>
+        <select id="platform">
+            <option value="pinterest">Pinterest</option>
+            <option value="bing">Bing</option>
+            <option value="google">Google</option>
+        </select>
+        <button type="submit">开始搜索</button>
+    </form>
+    <div id="results" style="margin-top:20px;"></div>
 
-  <hr />
-  <div id="results"></div>
-
-  <script>
-    const form = document.getElementById('searchForm');
-    const results = document.getElementById('results');
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      results.innerHTML = '加载中...';
-
-      const formData = new FormData(form);
-      const query = formData.get('q');
-      const platform = formData.get('platform');
-
-      try {
-        const res = await fetch(`/search?q=${encodeURIComponent(query)}&platform=${platform}`);
-        const data = await res.json();
-
-        if (data.results && data.results.length) {
-          results.innerHTML = '';
-          data.results.forEach(img => {
-            const el = document.createElement('img');
-            el.src = img.url;
-            el.alt = img.source;
-            el.style = "max-width: 200px; margin: 5px;";
-            results.appendChild(el);
-          });
-        } else {
-          results.innerHTML = '没有找到图片。';
+    <script>
+        async function search() {
+            const query = document.getElementById("query").value;
+            const platform = document.getElementById("platform").value;
+            const res = await fetch(`/search?q=${encodeURIComponent(query)}&platform=${platform}`);
+            const data = await res.json();
+            const resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML = "";
+            if (Array.isArray(data)) {
+                data.forEach(item => {
+                    const img = document.createElement("img");
+                    img.src = item.url;
+                    resultsDiv.appendChild(img);
+                });
+            } else {
+                resultsDiv.innerText = data.error || "未返回结果";
+            }
         }
-      } catch (err) {
-        results.innerHTML = '出错了：' + err.message;
-      }
-    });
-  </script>
+    </script>
 </body>
 </html>
