@@ -1,49 +1,39 @@
-from flask import Flask, request, jsonify
-import requests, os
+from flask import Flask, request, jsonify, render_template
+import os
 
 app = Flask(__name__)
+
+# 模拟支持的平台
+SUPPORTED_PLATFORMS = ['test', 'pinterest', 'bing']
+
 IMGBB_API_KEY = os.getenv("IMGBB_API_KEY")
 
-def upload_to_imgbb(image_url):
-    try:
-        response = requests.post(
-            "https://api.imgbb.com/1/upload",
-            params={"key": IMGBB_API_KEY},
-            data={"image": image_url},
-        )
-        result = response.json()
-        return result["data"]["url"] if result.get("data") else image_url
-    except:
-        return image_url
+@app.route('/')
+def home():
+    return render_template("index.html")
 
-def search_bing_images(query):
-    # 示例替代方案：返回虚拟图片
-    return [
-        f"https://via.placeholder.com/300x300?text={query}+A",
-        f"https://via.placeholder.com/300x300?text={query}+B"
-    ]
-
-def search_pinterest_images(query):
-    return [
-        f"https://via.placeholder.com/300x300?text={query}+Pin1",
-        f"https://via.placeholder.com/300x300?text={query}+Pin2"
-    ]
-
-@app.route("/search")
+@app.route('/search')
 def search():
-    query = request.args.get("q", "")
-    platform = request.args.get("platform", "bing")
+    query = request.args.get("q")
+    platform = request.args.get("platform")
 
-    if not query:
-        return jsonify({"error": "Missing query"}), 400
+    if platform not in SUPPORTED_PLATFORMS:
+        return jsonify({"error": "Unsupported platform"})
 
-    # 路由分发
-    if platform == "bing":
-        raw_images = search_bing_images(query)
-    elif platform == "pinterest":
-        raw_images = search_pinterest_images(query)
-    else:
-        return jsonify({"error": "Unsupported platform"}), 400
+    # 示例数据（测试平台用）
+    results = []
+    if platform == 'test':
+        results = [
+            {"source": "test", "url": f"https://imgplaceholder.com/300x300/cccccc/000000?text={query}+1"},
+            {"source": "test", "url": f"https://imgplaceholder.com/300x300/999999/000000?text={query}+2"},
+            {"source": "test", "url": f"https://imgplaceholder.com/300x300/666666/ffffff?text={query}+3"},
+        ]
 
-    results = [{"source": platform, "url": upload_to_imgbb(url)} for url in raw_images]
-    return jsonify({"platform": platform, "query": query, "results": results})
+    return jsonify({
+        "platform": platform,
+        "query": query,
+        "results": results
+    })
+
+if __name__ == '__main__':
+    app.run()
